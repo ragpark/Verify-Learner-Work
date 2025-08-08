@@ -8,6 +8,8 @@ pydantic==2.8.2
 pydantic-settings==2.4.0
 Jinja2==3.1.4
 starlette==0.38.5
+python-multipart==0.0.9
+
 
 # DB/queue
 SQLAlchemy==2.0.32
