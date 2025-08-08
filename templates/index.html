@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Moodle File Transfer Tool</title>
+</head>
+<body>
+    <h1>Moodle File Transfer Tool</h1>
+    <p>This service must be launched from your Learning Management System via LTI&nbsp;1.3.</p>
+    <ol>
+        <li>Register this app as an LTI tool in your LMS using {{ base_url }} as the launch URL.</li>
+        <li>Launch the tool as an administrator to supply OAuth client details for your Moodle platform.</li>
+        <li>Authorize with Moodle when prompted and use the interface to queue course file transfers to Azure Blob Storage.</li>
+    </ol>
+    <p>Use the <code>/healthz</code> endpoint for a basic deployment check.</p>
+</body>
+</html>

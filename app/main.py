@@ -47,6 +47,10 @@ def require_session(request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail="LTI launch required")
     return request.session["lti"]
 
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "base_url": settings.APP_BASE_URL})
+
 @app.get("/healthz")
 async def healthz():
     return {"ok": True}
