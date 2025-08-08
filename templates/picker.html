@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Assessor Transfer Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Assessor Transfer Tool</h1>
+    <p>Welcome, <strong>{{ user.name }}</strong>.</p>
+    <p class="muted">Platform: {{ platform.issuer }}</p>
+    <section>
+      <label>Course ID: <input id="courseId" type="number" placeholder="e.g. 42"></label>
+      <button id="loadBtn">Load Files</button>
+    </section>
+    <section>
+      <table id="filesTable">
+        <thead><tr><th>Select</th><th>Name</th><th>Size</th><th>Module</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <label>Destination path prefix (optional): <input id="prefix" placeholder="e.g. spring-term/"></label>
+      <button id="sendBtn">Send Selected</button>
+    </section>
+    <section id="status"></section>
+  </main>
+<script>
+const fmtSize = n => n ? (n/1024/1024).toFixed(2) + " MB" : "";
+let lastFiles = [];
+document.getElementById("loadBtn").onclick = async () => {
+  const cid = document.getElementById("courseId").value;
+  const res = await fetch(`/moodle/files?course_id=${cid}`);
+  const data = await res.json();
+  lastFiles = data.files || [];
+  const tbody = document.querySelector("#filesTable tbody");
+  tbody.innerHTML = "";
+  lastFiles.forEach((f, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = \`
+      <td><input type="checkbox" data-idx="\${idx}"></td>
+      <td>\${f.filename}</td>
+      <td>\${fmtSize(f.filesize)}</td>
+      <td>\${(f.module && f.module.name) || ""}</td>\`;
+    tbody.appendChild(tr);
+  });
+};
+
+document.getElementById("sendBtn").onclick = async () => {
+  const cid = parseInt(document.getElementById("courseId").value, 10);
+  const prefix = document.getElementById("prefix").value || "";
+  const rows = Array.from(document.querySelectorAll("#filesTable tbody tr"));
+  const selected = [];
+  rows.forEach((tr, i) => {
+    const chk = tr.querySelector("input[type=checkbox]");
+    if (chk && chk.checked) selected.push(lastFiles[i]);
+  });
+  if (selected.length === 0) { alert("Select at least one file"); return; }
+  const res = await fetch("/transfers", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ course_id: cid, files: selected, destination_path_prefix: prefix })
+  });
+  const data = await res.json();
+  document.getElementById("status").innerHTML = "Job queued: " + data.job_id + ". Tracking...";
+  const timer = setInterval(async () => {
+    const sres = await fetch("/transfers/" + data.job_id);
+    const s = await sres.json();
+    document.getElementById("status").innerHTML = "Job " + s.id + ": " + s.status + " (" + s.bytes_sent + "/" + s.bytes_total + " bytes)";
+    if (s.status === "completed" || s.status === "failed") clearInterval(timer);
+  }, 3000);
+};
+</script>
+</body>
+</html>
