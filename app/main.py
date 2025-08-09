@@ -22,13 +22,6 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-# remove this line near the top:
-# init_db()
-
-from fastapi import FastAPI
-app = FastAPI()
-
 @app.on_event("startup")
 def _startup():
     # Try to init DB but never crash the server if it fails
