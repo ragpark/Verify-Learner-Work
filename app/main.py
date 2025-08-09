@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -47,6 +48,19 @@ async def root(request: Request):
 @app.get("/healthz")
 async def healthz():
     return {"ok": True}
+
+@app.get("/.well-known/jwks.json", response_class=JSONResponse)
+async def get_jwks():
+    key = json.loads(settings.LTI_TOOL_PRIVATE_KEY_JWK)
+    public_jwk = {
+        "kty": key.get("kty"),
+        "use": "sig",
+        "kid": settings.LTI_TOOL_KID,
+        "n": key.get("n"),
+        "e": key.get("e"),
+        "alg": "RS256",
+    }
+    return {"keys": [public_jwk]}
 
 @app.post("/lti/launch")
 async def lti_launch(request: Request, id_token: str = Form(...), state: str = Form(None), db: Session = Depends(get_db)):
